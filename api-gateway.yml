@@ -1,0 +1,86 @@
+# ============================================================
+# api-gateway.yml — Centralized config for api-gateway
+# Config Server is file ko api-gateway ko serve karega
+# ============================================================
+
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      # CORS Configuration for Gateway
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+      routes:
+        # Route 1: Auth Service — No JWT filter (login/register public hain)
+        - id: auth-service-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: auth-service-cb
+                fallbackUri: forward:/fallback/auth
+
+        # Route 2: Employee Service — JWT Filter + Circuit Breaker
+        - id: employee-service-route
+          uri: lb://employee-service
+          predicates:
+            - Path=/api/employees/**
+          filters:
+            - name: JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: employee-service-cb
+                fallbackUri: forward:/fallback/employee
+
+# Eureka Client
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# JWT Secret
+jwt:
+  secret: mySecretKeyForJWTwhichMustBeAtLeast256BitsLongForHS256Algorithm
+
+# Resilience4j Circuit Breaker
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50
+        slidingWindowSize: 10
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+    instances:
+      employee-service-cb:
+        baseConfig: default
+      auth-service-cb:
+        baseConfig: default
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.example.gateway: DEBUG
+    io.github.resilience4j: DEBUG

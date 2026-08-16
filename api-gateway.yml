@@ -84,3 +84,12 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     com.example.gateway: DEBUG
     io.github.resilience4j: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always

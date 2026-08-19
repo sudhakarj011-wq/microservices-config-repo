@@ -1,0 +1,40 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+
+  profiles:
+    active: git    # git = GitHub se config lo (production/real use ke liye)
+
+  cloud:
+    config:
+      server:
+
+        # =============================================
+        # OPTION 1: Git (GitHub) — Active
+        # =============================================
+        git:
+          uri: https://github.com/sudhakarj011-wq/microservices-config-repo.git
+          default-label: master      # Aapki branch ka naam (screenshot me 'master' dikh raha tha)
+          clone-on-start: true       # Startup par GitHub se config clone kar lo
+          force-pull: true           # Local cache ignore karo, hamesha GitHub se fresh lao
+
+        # =============================================
+        # OPTION 2: Native (Local File System) — Development fallback
+        # =============================================
+        # Jab GitHub nahi use karna ho (offline development), toh:
+        #   1. profiles.active: native kar do
+        #   2. Git section comment out karo
+        #
+        # native:
+        #   search-locations: classpath:/config-repo
+
+# Actuator — health check ke liye
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+

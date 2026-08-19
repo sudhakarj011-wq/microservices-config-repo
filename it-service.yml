@@ -1,0 +1,48 @@
+# ============================================================
+# it-service.yml — Centralized config for it-service
+# Config Server is file ko it-service ko serve karega
+# ============================================================
+
+server:
+  port: 8085
+
+spring:
+  # Kafka Consumer — employee-onboarding-initiated-topic sun'ne ke liye
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: it-onboarding-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.it.event,com.example.employee.event"
+        spring.json.use.type.headers: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+# Eureka Client
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    com.example.it: DEBUG
+    org.springframework.kafka: INFO
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always

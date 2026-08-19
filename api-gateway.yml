@@ -47,6 +47,18 @@ spring:
                 name: employee-service-cb
                 fallbackUri: forward:/fallback/employee
 
+        # Route 3: IT Service — JWT Filter (IT_ADMIN/SUPER_ADMIN access)
+        - id: it-service-route
+          uri: lb://it-service
+          predicates:
+            - Path=/it/**
+          filters:
+            - name: JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: it-service-cb
+                fallbackUri: forward:/fallback/it
+
 # Eureka Client
 eureka:
   client:
@@ -78,6 +90,8 @@ resilience4j:
         baseConfig: default
       auth-service-cb:
         baseConfig: default
+      it-service-cb:
+        baseConfig: default
 
 logging:
   level:
@@ -85,6 +99,7 @@ logging:
     com.example.gateway: DEBUG
     io.github.resilience4j: DEBUG
 
+# Actuator — Gateway health check endpoints
 management:
   endpoints:
     web:

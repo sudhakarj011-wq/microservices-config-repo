@@ -35,3 +35,37 @@ logging:
   level:
     com.example.employee: DEBUG
     org.springframework.security: DEBUG
+
+# ============================================================
+# Resilience4j — Circuit Breaker (employee-service level)
+#
+# WHY yahan bhi? Gateway mein bhi hai!
+#   Gateway CB: Network level — employee-service respond nahi kar raha
+#   Employee-service CB: Application level — DB down/slow hai
+#   Dono alag layers par protect karte hain (Defense in Depth)
+# ============================================================
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s   # 3 second se zyada time laga toh timeout
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50          # 50% calls fail hone par OPEN
+        slidingWindowSize: 10             # 10 calls ka window dekho
+        waitDurationInOpenState: 10s      # 10s OPEN rehne ke baad HALF-OPEN
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+    instances:
+      employee-db:        # DB calls ke liye circuit breaker
+        baseConfig: default
+
+# ============================================================
+# Feign Client Logging (DEBUG mein dekho inter-service calls)
+# ============================================================
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: BASIC   # REQUEST_URL + STATUS_CODE log hoga
